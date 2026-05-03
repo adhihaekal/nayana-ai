@@ -110,23 +110,17 @@ export default function Home() {
       style={{
         minHeight: "100vh",
         display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "linear-gradient(135deg, #f8e0e1, #F9A8A8)", // pastel + gradient
+        flexDirection: "row",
+        flexWrap: "wrap",
+        background: "linear-gradient(135deg, #f8e0e1, #F9A8A8)",
       }}
     >
       <div
         style={{
-          position: "absolute",
-          top: 0,
-          bottom: 0,
-          height: "100%",
-          left: 40,
-          maxWidth: 420,
+          flex: "1 1 400px",
           padding: 20,
-          borderRadius: 20,
-
-          overflow: "hidden",
+          position: "relative",
+          minHeight: 300,
         }}
       >
         {/* BACKGROUND IMAGE */}
@@ -195,10 +189,11 @@ export default function Home() {
       {/* APP CARD */}
       <div
         style={{
-          minHeight: "100vh",
+          flex: "1 1 380px",
           display: "flex",
-          alignItems: "center",
           justifyContent: "center",
+          alignItems: "center",
+          padding: 20,
         }}
       >
         <div
@@ -412,21 +407,26 @@ export default function Home() {
 
       <div
         style={{
-          position: "absolute",
-          bottom: 10,
-          right: 40,
-          maxWidth: 320,
-          padding: 16,
-          background: "rgba(255,255,255,0.7)",
-          borderRadius: 16,
-          backdropFilter: "blur(10px)",
-          boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+          flex: "1 1 300px",
+          padding: 20,
+          display: "flex",
+          justifyContent: "flex-end", // kanan
+          marginTop: "auto",
         }}
       >
-        <div style={{ marginBottom: 16 }}>
-          <h4 style={{ marginBottom: 10 }}>Core Skills</h4>
+        <div
+          style={{
+            width: 420,
+            display: "flex",          // 🔥 WAJIB
+            flexDirection: "row",
+            gap: 10,
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          }}
+        >
+
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1  }}>
+            <h4 style={{ marginBottom: 10 }}>Core Skills</h4>
 
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Baby size={16} color="#F87171" />
@@ -457,16 +457,17 @@ export default function Home() {
             </div>
 
           </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, flex: 1  }}>
+            <h4 style={{ marginBottom: 6 }}>How it works</h4>
+            <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6 }}>
+              • Tell Nayanika what’s happening <br />
+              • Get gentle guidance instantly <br />
+              • Feel more confident every day
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h4 style={{ marginBottom: 6 }}>How it works</h4>
-          <p style={{ color: "#666", fontSize: 14, lineHeight: 1.6 }}>
-            • Tell Nayanika what’s happening <br />
-            • Get gentle guidance instantly <br />
-            • Feel more confident every day
-          </p>
-        </div>
+
       </div>
     </div>
   );
