@@ -1,32 +1,32 @@
 type Skill =
-    | "cry_analysis"
-    | "nutrition_analysis"
-    | "sleep_support"
-    | "emotional_support";
+  | "cry_analysis"
+  | "nutrition_analysis"
+  | "sleep_support"
+  | "emotional_support";
 
 function detectSkill(message: string): Skill {
-    const msg = message.toLowerCase();
+  const msg = message.toLowerCase();
 
-    if (msg.includes("nangis") || msg.includes("cry")) {
-        return "cry_analysis";
-    }
-    if (msg.includes("makan") || msg.includes("food")) {
-        return "nutrition_analysis";
-    }
-    if (msg.includes("tidur") || msg.includes("sleep")) {
-        return "sleep_support";
-    }
+  if (msg.includes("nangis") || msg.includes("cry")) {
+    return "cry_analysis";
+  }
+  if (msg.includes("makan") || msg.includes("food")) {
+    return "nutrition_analysis";
+  }
+  if (msg.includes("tidur") || msg.includes("sleep")) {
+    return "sleep_support";
+  }
 
-    return "emotional_support";
+  return "emotional_support";
 }
 
 function buildPrompt(
-    skill: Skill,
-    input: string,
-    history: any[],
-    babyProfile: any
+  skill: Skill,
+  input: string,
+  history: any[],
+  babyProfile: any
 ) {
-    const character = `
+  const character = `
 You are Nayanika, a gentle and empathetic AI babysitter.
 
 Your personality:
@@ -34,28 +34,41 @@ Your personality:
 - supportive
 - non-judgmental
 - reassuring for new mothers
+
+You only provide support related to:
+- baby care
+- infant nutrition
+- crying analysis
+- sleep support
+- emotional support for mothers
+
+If the user asks unrelated topics,
+gently redirect the conversation back to baby care.
+
+Do not answer unrelated technical, political,
+financial, or general knowledge questions.
 `;
 
-    // 🔥 Structured context
-    const profileContext = `
+  // 🔥 Structured context
+  const profileContext = `
 Baby Profile:
 - Age: ${babyProfile.age || "unknown"}
 `;
 
-    const historyText = (history || [])
-        .slice(-5) // ambil 5 terakhir saja
-        .map((h) => h.content)
-        .join("\n");
+  const historyText = (history || [])
+    .slice(-5) // ambil 5 terakhir saja
+    .map((h) => h.content)
+    .join("\n");
 
-    const context = `
+  const context = `
 ${profileContext}
 
 Recent conversation:
 ${historyText}
 `;
 
-    const prompts: Record<Skill, string> = {
-        cry_analysis: `
+  const prompts: Record<Skill, string> = {
+    cry_analysis: `
 ${character}
 ${context}
 
@@ -75,7 +88,7 @@ Give:
 - suggestions
 - reassurance
 `,
-        nutrition_analysis: `
+    nutrition_analysis: `
 ${character}
 ${context}
 
@@ -92,7 +105,7 @@ Provide:
 - missing nutrients
 - food suggestions
 `,
-        sleep_support: `
+    sleep_support: `
 ${character}
 ${context}
 
@@ -108,7 +121,7 @@ Provide:
 - reasons
 - tips
 `,
-        emotional_support: `
+    emotional_support: `
 ${character}
 
 Mother is stressed.
@@ -118,9 +131,9 @@ ${input}
 
 Respond with empathy
 `,
-    };
+  };
 
-    return prompts[skill];
+  return prompts[skill];
 }
 
 async function extractMemory(input: string) {
@@ -164,6 +177,40 @@ ${input}
   }
 }
 
+function isBabyRelated(message: string) {
+  const keywords = [
+    "bayi",
+    "baby",
+    "nangis",
+    "cry",
+    "tidur",
+    "sleep",
+    "makan",
+    "food",
+    "ibu",
+    "mother",
+    "ASI",
+    "anak",
+    "newborn",
+    "infant",
+    "susu",
+  ];
+
+  return keywords.some((k) =>
+    message.toLowerCase().includes(k)
+  );
+}
+
+const fallbackResponses = [
+  "I'm here to support baby care and emotional support for mothers 💛",
+  "Saya di sini untuk mendukung perawatan bayi dan dukungan emosional bagi para ibu 💛",
+  "Let's focus on caring for your little one 👶, that Adhi haekal says",
+  "Mari fokus merawat si kecil ya 👶",
+  "I’d love to help with baby care and parenting support 🌸",
+  "Saya sangat ingin membantu dalam perawatan bayi dan dukungan pengasuhan anak 🌸",
+  "Adhi Haekal told me to protect all babies 👶"
+];
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -176,18 +223,31 @@ export async function POST(req: Request) {
       return Response.json({ error: "Message is required" }, { status: 400 });
     }
 
-    // 🔥 STEP 1: Extract memory
+    // 🔥 STEP 1: Cek Pertanyaan yang related
+    if (!isBabyRelated(message)) {
+      const randomReply =
+        fallbackResponses[
+        Math.floor(Math.random() * fallbackResponses.length)
+        ];
+
+      return Response.json({
+        skill: "restricted",
+        result: randomReply,
+      });
+    }
+
+    // 🔥 STEP 2: Extract memory
     const extracted = await extractMemory(message);
 
-    // 🔥 STEP 2: Merge ke profile lama
+    // 🔥 STEP 3: Merge ke profile lama
     babyProfile = {
       ...babyProfile,
       ...Object.fromEntries(
         Object.entries(extracted).filter(([_, v]) => v !== null)
       ),
     };
-
-    // 🔥 STEP 3: Normal AI flow
+    
+    // 🔥 STEP 4: Normal AI flow
     const skill = detectSkill(message);
     const prompt = buildPrompt(skill, message, history, babyProfile);
 
